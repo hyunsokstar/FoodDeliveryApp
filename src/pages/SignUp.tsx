@@ -13,6 +13,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../../App';
 // import axios from 'axios';
 import axios, {AxiosError} from 'axios';
+import Config from 'react-native-config';
 
 type SignUpScreenProps = NativeStackScreenProps<RootStackParamList, 'SignUp'>;
 
@@ -59,11 +60,12 @@ function SignUp({navigation}: SignUpScreenProps) {
         '비밀번호는 영문,숫자,특수문자($@^!%*#?&)를 모두 포함하여 8자 이상 입력해야합니다.',
       );
     }
-    console.log(email, name, password);
+    console.log(email, name, password, loading);
+    console.log(Config.API_URL);
 
     try {
       setLoading(true);
-      const response = await axios.post('10.0.0.2:3105/user', {
+      const response = await axios.post(`${Config.API_URL}/user`, {
         email,
         name,
         password,
@@ -86,7 +88,7 @@ function SignUp({navigation}: SignUpScreenProps) {
     }
 
     Alert.alert('알림', '회원가입 되었습니다.');
-  }, [navigation, email, name, password]);
+  }, [navigation, email, name, password, loading]);
 
   const canGoNext = email && name && password;
   return (
