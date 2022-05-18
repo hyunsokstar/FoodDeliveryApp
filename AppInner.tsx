@@ -11,14 +11,12 @@ import {useSelector} from 'react-redux';
 import {RootState} from './src/store/reducer';
 import useSocket from './src/hooks/useSocket';
 import {useEffect} from 'react';
-
 import {useAppDispatch} from './src/store';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import axios from 'axios';
 import Config from 'react-native-config';
 import userSlice from './src/slices/user';
 import {Alert} from 'react-native';
-// 추가
 import orderSlice from './src/slices/order';
 
 export type LoggedInParamList = {
@@ -37,12 +35,50 @@ const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 function AppInner() {
+  // state.user.email이 존재하면 로그인 상태로 간주 <=> 이메일이 없을 경우 비로그인 상태로 간주
   const isLoggedIn = useSelector((state: RootState) => !!state.user.email);
   console.log('isLoggedIn', isLoggedIn);
-
   const dispatch = useAppDispatch();
-
   const [socket, disconnect] = useSocket();
+
+  useEffect(() => {
+    axios.interceptors.response.use(
+      response => response,
+      async error => {
+        // const {response: {status}} = error;
+        const {
+          config,
+          response: {status},
+        } = error;
+        if (status === 419) {
+          if (error.response.data.code === 'expired') {
+            console.log('다시 발급 요청 날립니다');
+            const originalRequest = config;
+
+            const token = await EncryptedStorage.getItem('refreshToken');
+            if (!token) {
+              return;
+            }
+            const response = await axios.post(
+              `${Config.API_URL}/refreshToken`,
+              {},
+              {
+                headers: {
+                  authorization: `Bearer ${token}`,
+                },
+              },
+            );
+            // 새로운 토큰 저장
+            dispatch(userSlice.actions.setAccessToken(data.data.accessToken));
+            originalRequest.headers.authorization = `Bearer ${data.data.accessToken}`;
+            // 419로 요청 실패했던 요청 새로운 토큰으로 재요청
+            return axios(originalRequest);
+          }
+        }
+        return Promise.reject(error);
+      },
+    );
+  }, [dispatch]);
 
   useEffect(() => {
     const callback = (data: any) => {
@@ -51,10 +87,8 @@ function AppInner() {
     };
     if (socket && isLoggedIn) {
       console.log(socket);
-      // socket.emit('login', 'hello');
-      socket.emit('acceptOrder', 'hello');
-      // socket.on('hello', helloCallback);
-      socket.on('order', callback);
+      socket.emit('acceptOrder', 'hello'); // 소켓이 연결 되면 클라이언트에서 소켓 이벤트를 발생 시킨다 (key: acceptOrder, value: 'hello')
+      socket.on('order', callback); // 서버에서 order 라는 소켓 이벤트와 함께 데이터를 전달해오면 callback 으로 받는다.
     }
     return () => {
       if (socket) {
@@ -71,7 +105,9 @@ function AppInner() {
     }
   }, [isLoggedIn, disconnect]);
 
-  // 앱 실행 시 토큰 있으면 로그인하는 코드
+  // 앱 실행 시 refreshToken이 있으면 로그인 상태이므로 <=> const token = await EncryptedStorage.getItem('refreshToken');
+  // 다시 토큰을 요청하여 토큰을 받는다.
+  // 이부분을 주석 처리 하면 프론트 재시작시 로그인 풀림
   useEffect(() => {
     const getTokenAndRefresh = async () => {
       try {

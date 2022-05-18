@@ -1,4 +1,5 @@
-package com.fooddeliveryapp;
+// package com.fooddeliveryapp;
+package com.hyun0316.fooddeliveryapp;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;

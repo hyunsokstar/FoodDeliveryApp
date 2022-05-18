@@ -1,4 +1,4 @@
-package com.fooddeliveryapp.newarchitecture;
+package com.hyun0316.fooddeliveryapp.newarchitecture;
 
 import android.app.Application;
 import androidx.annotation.NonNull;
