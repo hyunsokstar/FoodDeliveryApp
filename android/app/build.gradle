@@ -135,7 +135,7 @@ android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        // applicationId "com.fooddeliveryapp"
+        // applicationId "com.hyun.fooddeliveryapp"
         applicationId "com.hyun0316.fooddeliveryapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
